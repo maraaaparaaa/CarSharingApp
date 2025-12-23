@@ -25,4 +25,5 @@ public interface RideRepository extends JpaRepository<Ride, Long> {
     // finds available rides by no of seats
     // SQL: SELECT * FROM rides WHERE available_seats > 0
     List<Ride> findByAvailableSeatsGreaterThan(Integer seats);
+
 }

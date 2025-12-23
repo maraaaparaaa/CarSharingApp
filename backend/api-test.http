@@ -1,0 +1,38 @@
+### Test 1: Create User
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+  "email": "ion@test.com",
+  "password": "parola123",
+  "fullName": "Ion Popescu",
+  "phoneNumber": "0712345678",
+  "role": "USER"
+}
+
+### Test 2: Get All Users
+GET http://localhost:8080/api/users
+
+### Test 3: Create Ride
+POST http://localhost:8080/api/rides
+Content-Type: application/json
+
+{
+  "startLocation": "Cluj-Napoca",
+  "endLocation": "București",
+  "departureTime": "2024-12-25T10:00:00",
+  "totalSeats": 4,
+  "pricePerSeat": 50.00,
+  "carModel": "Dacia Logan",
+  "carColor": "Alb",
+  "description": "Drum liniștit",
+  "driver": {
+    "id": 1
+  }
+}
+
+### Test 4: Search Rides
+GET http://localhost:8080/api/rides/search?from=Cluj-Napoca&to=București
+
+### Test 5: Get All Rides
+GET http://localhost:8080/api/rides

@@ -44,7 +44,7 @@ public class User {
     private Double rating;
 
     public enum UserRole {
-        VISITOR,  // cand only see rides
+        VISITOR,  // can only see rides
         USER,     // can book or post rides
         ADMIN
     }

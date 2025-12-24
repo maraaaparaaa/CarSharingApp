@@ -1,7 +1,7 @@
 package com.carsharing.backend.exception;
 
-public class BookingException extends ApiException {
-    public BookingException(String message) {
+public class InvalidBookingException extends RuntimeException {
+    public InvalidBookingException(String message) {
         super(message);
     }
 }

@@ -1,38 +1,223 @@
-### Test 1: Create User
-POST http://localhost:8080/api/users
+### ==============================================
+### TESTARE JWT AUTHENTICATION - CAR SHARING APP
+### ==============================================
+
+### Variabile (modifică după teste)
+@baseUrl = http://localhost:8080/api
+@token =
+@userId =
+@rideId =
+
+### ==============================================
+### 1. REGISTER - Creează user NOU
+### ==============================================
+POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
 {
   "email": "ion@test.com",
   "password": "parola123",
   "fullName": "Ion Popescu",
-  "phoneNumber": "0712345678",
-  "role": "USER"
+  "phoneNumber": "0712345678"
 }
 
-### Test 2: Get All Users
-GET http://localhost:8080/api/users
+### Răspuns așteptat (201 CREATED):
+### {
+###   "token": "eyJhbGciOiJIUzI1NiJ9...",
+###   "id": 1,
+###   "email": "ion@test.com",
+###   "fullName": "Ion Popescu",
+###   "role": "USER"
+### }
+###
+### ⚠️ COPIAZĂ TOKEN-UL din răspuns și pune-l în variabila @token de sus!
 
-### Test 3: Create Ride
-POST http://localhost:8080/api/rides
+### ==============================================
+### 2. LOGIN - Autentificare user existent
+### ==============================================
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "ion@test.com",
+  "password": "parola123"
+}
+
+### Răspuns așteptat (200 OK):
+### {
+###   "token": "eyJhbGci..." (TOKEN NOU, diferit de cel de la register!)
+###   "id": 1,
+###   "email": "ion@test.com",
+###   "fullName": "Ion Popescu",
+###   "role": "USER"
+### }
+
+### ==============================================
+### 3. LOGIN GREȘIT - Parolă incorectă
+### ==============================================
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "ion@test.com",
+  "password": "parolaGresita"
+}
+
+### Răspuns așteptat (401 UNAUTHORIZED)
+
+### ==============================================
+### 4. TEST AUTHENTICATION - Endpoint protejat
+### ==============================================
+GET {{baseUrl}}/auth/test
+Authorization: Bearer {{token}}
+
+### Răspuns așteptat (200 OK):
+### "Authentication works! You are logged in."
+
+### ==============================================
+### 5. TEST FĂRĂ TOKEN - Ar trebui să eșueze
+### ==============================================
+GET {{baseUrl}}/auth/test
+
+### Răspuns așteptat (403 FORBIDDEN)
+
+### ==============================================
+### 6. REGISTER USER 2 (pentru testare curse)
+### ==============================================
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "maria@test.com",
+  "password": "parola123",
+  "fullName": "Maria Ionescu",
+  "phoneNumber": "0723456789"
+}
+
+### ==============================================
+### 7. REGISTER ADMIN (pentru testare admin endpoints)
+### ==============================================
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin@test.com",
+  "password": "admin123",
+  "fullName": "Admin User",
+  "role": "ADMIN"
+}
+
+### Salvează token-ul admin separat!
+
+### ==============================================
+### 8. GET ALL USERS - Doar ADMIN
+### ==============================================
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+
+### Cu token USER → 403 FORBIDDEN
+### Cu token ADMIN → 200 OK cu lista useri
+
+### ==============================================
+### 9. GET USER BY ID - Orice user autentificat
+### ==============================================
+GET {{baseUrl}}/users/1
+Authorization: Bearer {{token}}
+
+### Răspuns așteptat (200 OK):
+### {
+###   "id": 1,
+###   "email": "ion@test.com",
+###   "fullName": "Ion Popescu",
+###   "role": "USER",
+###   ...
+### }
+
+### ==============================================
+### 10. CREEAZĂ CURSĂ - Necesită autentificare
+### ==============================================
+POST {{baseUrl}}/rides
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
   "startLocation": "Cluj-Napoca",
   "endLocation": "București",
-  "departureTime": "2024-12-25T10:00:00",
+  "departureTime": "2025-12-25T10:00:00",
   "totalSeats": 4,
   "pricePerSeat": 50.00,
   "carModel": "Dacia Logan",
   "carColor": "Alb",
-  "description": "Drum liniștit",
+  "description": "Drum liniștit, oprire pauză cafea",
   "driver": {
     "id": 1
   }
 }
 
-### Test 4: Search Rides
-GET http://localhost:8080/api/rides/search?from=Cluj-Napoca&to=București
+### Răspuns așteptat (201 CREATED)
+### ⚠️ Salvează "id" din răspuns în variabila @rideId
 
-### Test 5: Get All Rides
-GET http://localhost:8080/api/rides
+### ==============================================
+### 11. VEZI CURSE - FĂRĂ token (public)
+### ==============================================
+GET {{baseUrl}}/rides
+
+### Ar trebui să funcționeze fără token!
+### Răspuns: lista cu toate cursele
+
+### ==============================================
+### 12. CAUTĂ CURSE - FĂRĂ token (public)
+### ==============================================
+GET {{baseUrl}}/rides/search?from=Cluj-Napoca&to=București
+
+### Ar trebui să funcționeze fără token!
+
+### ==============================================
+### 13. CREEAZĂ BOOKING - Necesită autentificare
+### ==============================================
+POST {{baseUrl}}/bookings
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "passengerId": 2,
+  "rideId": 1,
+  "seatsBooked": 2
+}
+
+### Răspuns așteptat (201 CREATED):
+### {
+###   "id": 1,
+###   "passenger": {...},
+###   "ride": {...},
+###   "seatsBooked": 2,
+###   "totalPrice": 100.00,
+###   "status": "PENDING",
+###   ...
+### }
+
+### ==============================================
+### 14. VEZI BOOKING-URILE TALE - Necesită autentificare
+### ==============================================
+GET {{baseUrl}}/bookings/passenger/2
+Authorization: Bearer {{token}}
+
+### ==============================================
+### 15. ANULEAZĂ BOOKING - Necesită autentificare
+### ==============================================
+PUT {{baseUrl}}/bookings/1/cancel
+Authorization: Bearer {{token}}
+
+### Verifică că:
+### - status devine "CANCELLED"
+### - availableSeats crește în ride
+
+### ==============================================
+### 16. DELETE USER - Doar ADMIN
+### ==============================================
+DELETE {{baseUrl}}/users/3
+Authorization: Bearer {{token}}
+
+### Cu token USER → 403 FORBIDDEN
+### Cu token ADMIN → 204 NO CONTENT
+

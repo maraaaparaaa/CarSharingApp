@@ -20,18 +20,18 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
- * Configurarea completă de securitate pentru aplicație
+ * Complete Security Configuration
  *
- * Componente principale:
- * 1. PasswordEncoder - pentru hash-uirea parolelor
- * 2. AuthenticationProvider - verifică credențialele
- * 3. AuthenticationManager - orchestrează autentificarea
- * 4. SecurityFilterChain - definește regulile de acces
- * 5. JwtAuthenticationFilter - interceptează request-urile
+ * Components:
+ * 1. PasswordEncoder - for password hashing
+ * 2. AuthenticationProvider - checks credentials
+ * 3. AuthenticationManager - manages authentication
+ * 4. SecurityFilterChain - defines access rules
+ * 5. JwtAuthenticationFilter - manages the requests
  */
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity  // Permite @PreAuthorize pe metode
+@EnableMethodSecurity  // allows @PreAuthorize on methods
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -39,68 +39,70 @@ public class SecurityConfig {
     private final UserDetailsService userDetailsService;
 
     /**
-     * Definește regulile de securitate:
-     * - Ce endpoint-uri sunt publice?
-     * - Ce endpoint-uri necesită autentificare?
-     * - Ce endpoint-uri necesită roluri specifice?
+     * Defines security rules:
+     * - What endpoints are public?
+     * - What endpoints need authentication?
+     * - What endpoints need specified roles?
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // STEP 1: Dezactivează CSRF (nu avem nevoie pentru REST API cu JWT)
+                // Disables CSRF (no need for REST API with JWT) - csrf is used only with cookies and sessions
+                //                                                  when the site remembers the login ID - with JWT
+                //                                                  doesn't automatically send the authentication so we can disable protection
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // STEP 2: Permite frame-uri pentru H2 Console
+                // allows frames for H2 Console
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin())
                 )
 
-                // STEP 3: Configurează regulile de autorizare
+                // Configures authorisation rules
                 .authorizeHttpRequests(auth -> auth
-                        // ===== ENDPOINT-URI PUBLICE (fără token) =====
+                        //  Public endpoints - without token
                         .requestMatchers(
                                 "/api/auth/**",           // /api/auth/register, /api/auth/login
                                 "/h2-console/**",         // H2 Console
-                                "/api/rides",             // GET toate cursele (vizitatori pot vedea)
-                                "/api/rides/{id}",        // GET detalii cursă
-                                "/api/rides/search",      // GET căutare curse
-                                "/api/rides/upcoming"     // GET curse viitoare
+                                "/api/rides",             // GET all rides (visitors can see)
+                                "/api/rides/{id}",        // GET ride details
+                                "/api/rides/search",      // GET search ride
+                                "/api/rides/upcoming"     // GET future ride
                         ).permitAll()
 
-                        // ===== ENDPOINT-URI PROTEJATE - DOAR ADMIN =====
+                        // Protected endpoints - only Admin can manage them
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/bookings").hasRole("ADMIN")  // GET all bookings
 
-                        // ===== ENDPOINT-URI PROTEJATE - ORICE USER AUTENTIFICAT =====
-                        .anyRequest().authenticated()  // Tot restul necesită autentificare
+                        // - any authenticated user
+                        .anyRequest().authenticated()
                 )
 
-                // STEP 4: Stateless session (nu păstrăm sesiuni server-side)
-                // JWT-ul conține toată informația necesară
+                // Stateless session
+                // JWT contains all necessary info
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // STEP 5: Configurează authentication provider
+                // Configures authentication provider
                 .authenticationProvider(authenticationProvider())
 
-                // STEP 6: Adaugă JWT filter ÎNAINTE de UsernamePasswordAuthenticationFilter
-                // Acest filtru interceptează FIECARE request și verifică token-ul
+                // Adds JWT filter before UsernamePasswordAuthenticationFilter
+                // intercepts each request and checks the token
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     /**
-     * Bean pentru hash-uirea parolelor cu BCrypt
+     * Bean for password hashing with BCrypt
      *
-     * BCrypt caracteristici:
-     * - Salt automat (2 useri cu aceeași parolă au hash-uri diferite)
-     * - Slow by design (~100ms) - protecție contra brute force
+     * BCrypt :
+     * - Auto jump (2 users with the same password have different hashes)
+     * - Slow by design (~100ms) - protection against brute force
      * - Industry standard
      *
-     * Exemplu:
-     * Input: "parola123"
+     * Example:
+     * Input: "password123"
      * Output: "$2a$10$N9qo8uLOickgx2ZMRZoMye7Hu3Z6Z3h0KxKj9f0n1Z..."
      */
     @Bean
@@ -109,13 +111,13 @@ public class SecurityConfig {
     }
 
     /**
-     * AuthenticationProvider - componenta care VERIFICĂ credențialele
+     * AuthenticationProvider - component that checks credentials
      *
-     * Flow la login:
-     * 1. User trimite email + password
-     * 2. AuthenticationProvider apelează UserDetailsService.loadUserByUsername(email)
-     * 3. Primește UserDetails cu password hash-uit
-     * 4. Compară: passwordEncoder.matches(password_input, password_hash_din_DB)
+     * Login flow:
+     * 1. User sends email + password
+     * 2. AuthenticationProvider calls UserDetailsService.loadUserByUsername(email)
+     * 3. Gets UserDetails with hashed password
+     * 4. Compares: passwordEncoder.matches(password_input, password_hash_din_DB)
      * 5. Match? → SUCCESS | No match? → BadCredentialsException
      */
     @Bean
@@ -127,9 +129,9 @@ public class SecurityConfig {
     }
 
     /**
-     * AuthenticationManager - orchestrează procesul de autentificare
+     * AuthenticationManager - manages authentication process
      *
-     * Folosit în UserService.login() pentru a valida credențialele:
+     * Used in UserService.login() for credentials validation:
      * authenticationManager.authenticate(
      *     new UsernamePasswordAuthenticationToken(email, password)
      * )

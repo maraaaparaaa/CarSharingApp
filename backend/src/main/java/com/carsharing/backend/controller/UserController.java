@@ -1,70 +1,81 @@
 package com.carsharing.backend.controller;
 
 import com.carsharing.backend.model.User;
-import com.carsharing.backend.repository.UserRepository;
+import com.carsharing.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Controller for users management
+ *
+ * All endpoints are protected:
+ * - Needs valid JWT token
+ * - Some need specific role (ADMIN)
+ */
 @RestController
-@RequestMapping("/api/users") // all routes start with /api/users
-@RequiredArgsConstructor // injects UserRepository
-@CrossOrigin(origins = "*") // allows requests from everywhere
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class UserController {
-    private final UserRepository userRepository;
 
-    //GET /api/users
+    private final UserService userService;
+
+    /**
+     * GET /api/users
+     * Gets all users (only ADMIN)
+     *
+     * Required headers:
+     * Authorization: Bearer eyJhbGci...
+     *
+     * Required role: ADMIN
+     */
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers(){
-        List<User> users = userRepository.findAll();
+    @PreAuthorize("hasRole('ADMIN')")  // only ADMIN can have access - checked before executing the method
+                                    // if the user is not admin -> 403 FORBIDDEN
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
     }
 
-    //POST /api/users - creates a new user
-    @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user){
-        //checks if email already exists
-        if (userRepository.existsByEmail(user.getEmail())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
-        User savedUser = userRepository.save(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
+    /**
+     * GET /api/users/5
+     * Gets user by ID
+     *
+     * Any authenticated user can access
+     * (Required in reality:
+     *  - User needs to see only one's profile
+     *  - ADMIN can see any profile)
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        User user = userService.getUserById(id);
+        return ResponseEntity.ok(user);
     }
 
-    //PUT /api/users/5 - updates user
-    @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails){
-        return userRepository.findById(id)
-                .map(user -> {
-                    user.setFullName(userDetails.getFullName());
-                    user.setPhoneNumber(userDetails.getPhoneNumber());
-                    user.setRating(userDetails.getRating());
-
-                    //email and password updated separate
-                    User updatedUser = userRepository.save(user);
-                    return ResponseEntity.ok(updatedUser);
-                })
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    // DELETE /api/users/5 - delete user
-    @DeleteMapping("/{id}")
-    public ResponseEntity<User> deleteUser(@PathVariable Long id){
-        if (!userRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        userRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    //GET /api/users/email/ion@test.com - finds user by email
+    /**
+     * GET /api/users/email/ion@test.com
+     * Get user by email
+     */
     @GetMapping("/email/{email}")
-    public ResponseEntity<User> getUserByEmail(@PathVariable String email){
-        return userRepository.findByEmail(email)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<User> getUserByEmail(@PathVariable String email) {
+        User user = userService.getUserByEmail(email);
+        return ResponseEntity.ok(user);
+    }
+
+    /**
+     * DELETE /api/users/5
+     * Delete user (only ADMIN)
+     *
+     * Required role: ADMIN
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }

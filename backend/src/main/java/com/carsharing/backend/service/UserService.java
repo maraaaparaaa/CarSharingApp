@@ -5,7 +5,10 @@ import com.carsharing.backend.dto.LoginRequest;
 import com.carsharing.backend.dto.RegisterRequest;
 import com.carsharing.backend.exception.InvalidBookingException;
 import com.carsharing.backend.exception.ResourceNotFoundException;
+import com.carsharing.backend.model.Ride;
 import com.carsharing.backend.model.User;
+import com.carsharing.backend.repository.BookingRepository;
+import com.carsharing.backend.repository.RideRepository;
 import com.carsharing.backend.repository.UserRepository;
 import com.carsharing.backend.security.CustomUserDetails;
 import com.carsharing.backend.security.JwtService;
@@ -15,6 +18,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.carsharing.backend.config.SecurityConfig;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +35,8 @@ import java.util.Map;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final RideRepository rideRepository;
+    private final BookingRepository bookingRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
@@ -136,10 +142,27 @@ public class UserService {
     /**
      * Deletes user (only for ADMIN)
      */
+    @Transactional
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
             throw new ResourceNotFoundException("User with id " + id + " not found");
         }
+
+        // deletes bookings where the user is passenger
+        bookingRepository.deleteAllByPassengerId(id);
+
+        // obtains all users' rides
+        List<Ride> rides = rideRepository.findByDriverId(id);
+
+        // deletes all bookings for those rides
+        for (Ride ride : rides) {
+            bookingRepository.deleteAllByRideId(ride.getId());
+        }
+
+        // deletes the rides
+        rideRepository.deleteAllByDriverId(id);
+
+        // deletes the user
         userRepository.deleteById(id);
     }
 

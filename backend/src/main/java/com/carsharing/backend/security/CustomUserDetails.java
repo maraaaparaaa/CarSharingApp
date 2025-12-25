@@ -1,6 +1,7 @@
 package com.carsharing.backend.security;
 
 import com.carsharing.backend.model.User;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,8 +13,10 @@ import java.util.List;
  * Links User (our entity) with UserDetails (Spring Security)
  * Spring Security works with UserDetails, not directly with User
  */
+@Getter
 public class CustomUserDetails implements UserDetails {
 
+    // Getter for accessing original User
     private final User user;
 
     public CustomUserDetails(User user) {
@@ -60,8 +63,4 @@ public class CustomUserDetails implements UserDetails {
         return true; // all users are enabled
     }
 
-    // Getter for accessing original User
-    public User getUser() {
-        return user;
-    }
 }

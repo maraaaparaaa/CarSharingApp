@@ -20,4 +20,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     // finds all reservations by status
     // SQL: SELECT * FROM bookings WHERE status = ?
     List<Booking> findByStatus(Booking.BookingStatus status);
+
+    void deleteAllByPassengerId(Long passengerId);
+
+    void deleteAllByRideId(Long rideId);
 }

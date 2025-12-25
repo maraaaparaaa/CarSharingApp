@@ -4,10 +4,11 @@
 
 ### Variabile (modifică după teste)
 @baseUrl = http://localhost:8080/api
-@token =
+@token = eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiVVNFUiIsImlkIjoxLCJzdWIiOiJpb25AdGVzdC5jb20iLCJpYXQiOjE3NjY2NzcyNTEsImV4cCI6MTc2Njc2MzY1MX0.eEkuAp_dcOcEAjXS7hg4dETtLC3o_zm0utEtml1MO88
 @userId =
 @rideId =
-
+@mariaToken = eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiVVNFUiIsImlkIjoyLCJzdWIiOiJtYXJpYUB0ZXN0LmNvbSIsImlhdCI6MTc2NjY3NzI4MywiZXhwIjoxNzY2NzYzNjgzfQ.zTUhvxRkUJ7skRetIZkAocclBz13QLqcD1KV2mYzBJ4
+@adminToken = eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiQURNSU4iLCJpZCI6Mywic3ViIjoiYWRtaW5AdGVzdC5jb20iLCJpYXQiOjE3NjY2ODM5NDIsImV4cCI6MTc2Njc3MDM0Mn0.06BjAPFR2zvE39UXTvOXsXU4y6qMjYtMJQPaYNzZMZA
 ### ==============================================
 ### 1. REGISTER - Creează user NOU
 ### ==============================================
@@ -113,7 +114,7 @@ Content-Type: application/json
 ### 8. GET ALL USERS - Doar ADMIN
 ### ==============================================
 GET {{baseUrl}}/users
-Authorization: Bearer {{token}}
+Authorization: Bearer {{adminToken}}
 
 ### Cu token USER → 403 FORBIDDEN
 ### Cu token ADMIN → 200 OK cu lista useri
@@ -143,7 +144,7 @@ Content-Type: application/json
 {
   "startLocation": "Cluj-Napoca",
   "endLocation": "București",
-  "departureTime": "2025-12-25T10:00:00",
+  "departureTime": "2025-12-27T10:00:00",
   "totalSeats": 4,
   "pricePerSeat": 50.00,
   "carModel": "Dacia Logan",
@@ -176,11 +177,10 @@ GET {{baseUrl}}/rides/search?from=Cluj-Napoca&to=București
 ### 13. CREEAZĂ BOOKING - Necesită autentificare
 ### ==============================================
 POST {{baseUrl}}/bookings
-Authorization: Bearer {{token}}
+Authorization: Bearer {{mariaToken}}
 Content-Type: application/json
 
 {
-  "passengerId": 2,
   "rideId": 1,
   "seatsBooked": 2
 }
@@ -215,9 +215,15 @@ Authorization: Bearer {{token}}
 ### ==============================================
 ### 16. DELETE USER - Doar ADMIN
 ### ==============================================
-DELETE {{baseUrl}}/users/3
-Authorization: Bearer {{token}}
+DELETE {{baseUrl}}/users/1
+Authorization: Bearer {{adminToken}}
 
 ### Cu token USER → 403 FORBIDDEN
 ### Cu token ADMIN → 204 NO CONTENT
+```
 
+---
+
+## 🎯 SECVENȚA DE TESTARE (Pas cu Pas)
+
+### **FAZA 1: Pornește Aplicația**

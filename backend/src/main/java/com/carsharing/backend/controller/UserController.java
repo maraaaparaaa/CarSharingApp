@@ -1,10 +1,13 @@
 package com.carsharing.backend.controller;
 
 import com.carsharing.backend.model.User;
+import com.carsharing.backend.security.CustomUserDetails;
 import com.carsharing.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -45,15 +48,25 @@ public class UserController {
      * GET /api/users/5
      * Gets user by ID
      *
-     * Any authenticated user can access
-     * (Required in reality:
      *  - User needs to see only one's profile
-     *  - ADMIN can see any profile)
+     *  - ADMIN can see any profile
      */
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        User user = userService.getUserById(id);
-        return ResponseEntity.ok(user);
+    public ResponseEntity<User> getUserById(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails currentUser) {
+        System.out.println("Current user: " + currentUser);
+
+        User requestedUser = userService.getUserById(id);
+
+        System.out.println("Requested user: " + requestedUser.getEmail());
+
+        boolean isAdmin = currentUser.getAuthorities().stream()
+                .anyMatch(a-> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if(!isAdmin && !currentUser.getUsername().equals(requestedUser.getEmail())){
+            throw new AccessDeniedException("You cannot access other users' data");
+        }
+
+        return ResponseEntity.ok(requestedUser);
     }
 
     /**

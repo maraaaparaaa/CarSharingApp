@@ -26,7 +26,7 @@ import java.util.function.Function;
 public class JwtService {
 
     // Inject application properties
-    @Value("${jwt.expiration}")
+    @Value("${jwt.secret}")
     private String secretKey;
 
     @Value("${jwt.expiration}")

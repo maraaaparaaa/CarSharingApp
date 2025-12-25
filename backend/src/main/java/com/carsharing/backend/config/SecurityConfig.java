@@ -4,6 +4,7 @@ import com.carsharing.backend.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -61,17 +62,18 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         //  Public endpoints - without token
                         .requestMatchers(
-                                "/api/auth/**",           // /api/auth/register, /api/auth/login
+                                "/api/auth/login",
+                                "api/auth/register",
                                 "/h2-console/**",         // H2 Console
                                 "/api/rides",             // GET all rides (visitors can see)
                                 "/api/rides/{id}",        // GET ride details
                                 "/api/rides/search",      // GET search ride
                                 "/api/rides/upcoming"     // GET future ride
                         ).permitAll()
-
                         // Protected endpoints - only Admin can manage them
-                        .requestMatchers("/api/users/**").hasRole("ADMIN")
-                        .requestMatchers("/api/bookings").hasRole("ADMIN")  // GET all bookings
+                        .requestMatchers("/api/users/**").authenticated()
+                        .requestMatchers(HttpMethod.GET,"/api/bookings").hasRole("ADMIN")  // GET all bookings
+                        .requestMatchers(HttpMethod.POST, "/api/bookings").authenticated()
 
                         // - any authenticated user
                         .anyRequest().authenticated()
@@ -89,6 +91,7 @@ public class SecurityConfig {
                 // Adds JWT filter before UsernamePasswordAuthenticationFilter
                 // intercepts each request and checks the token
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
 
         return http.build();
     }

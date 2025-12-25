@@ -26,4 +26,5 @@ public interface RideRepository extends JpaRepository<Ride, Long> {
     // SQL: SELECT * FROM rides WHERE available_seats > 0
     List<Ride> findByAvailableSeatsGreaterThan(Integer seats);
 
+    void deleteAllByDriverId(Long driverId);
 }

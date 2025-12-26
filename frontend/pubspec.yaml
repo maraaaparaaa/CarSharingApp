@@ -1,0 +1,42 @@
+name: frontend
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # HTTP requests
+  http: ^1.1.0
+
+  # State management
+  provider: ^6.1.0
+
+  # Secure storage (JWT token)
+  flutter_secure_storage: ^10.0.0
+
+  # JSON serialization
+  json_annotation: ^4.8.1
+
+  # Cupertino icons
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Lints
+  flutter_lints: ^6.0.0
+
+  # JSON serialization generator
+  json_serializable: ^6.7.1
+
+  build_runner: ^2.4.7
+
+flutter:
+  uses-material-design: true
